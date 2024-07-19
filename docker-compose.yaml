@@ -1,0 +1,42 @@
+version: '3.8'
+
+networks:
+  up_net:
+    name: up_net
+    driver: bridge
+
+services:
+  mysql_up:
+    container_name: mysql_up
+    command: --default-authentication-plugin=mysql_native_password
+    image: mysql:8.2.0
+    networks:
+      - up_net
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: 1010
+      MYSQL_DATABASE: upinvest
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql #Adicionado
+    restart: always
+
+  up-api:
+    container_name: up-api
+    #image: node:16
+    build:
+      context: ./APIs
+      dockerfile: Dockerfile
+    entrypoint: sh -c "npm install && node index.js" #Adicionado
+    ports:
+      - "8686:8686"
+    volumes:  #Adicionado
+      - ./APIs:/app
+    networks:
+      - up_net
+    depends_on:
+      - mysql_up
+
+volumes:
+  mysql_data:
